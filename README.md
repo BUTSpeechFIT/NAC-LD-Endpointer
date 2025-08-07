@@ -6,7 +6,7 @@ Codebase for the work "Streaming Endpointer for Spoken Dialogue using Neural Aud
 - [ ] Add inference script
 - [ ] Add Moshi integration script
 
----
+___
 
 For any queries, feel free to reach out to udupa@fit.vutbr.cz / sathvikudupa66@gmail.com
 
