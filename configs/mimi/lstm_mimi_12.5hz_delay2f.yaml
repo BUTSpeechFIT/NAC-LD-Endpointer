@@ -1,0 +1,90 @@
+data:
+  datasets:
+    spokenwoz:
+      modes: [train, val, test]
+      override_preprocessed_data: False ### This is the data converted to the standard format
+      override_vad_data: False ### This is the VAD processed data
+      override_processed_data: False ### This is the processed data
+      override_filtered_data: False ### This is the filtered data
+      raw_path: /mnt/matylda4/udupa/data/SpokenWOZ/
+      num_samples:
+        train: 100
+        val:
+        test: 100
+  save_paths:
+    preprocessed_data_path: /mnt/matylda4/udupa/data/dump/endpointing/{dataset}/preprocessed_{mode}.json
+    vad_data_path: /mnt/matylda4/udupa/data/dump/endpointing/{dataset}/vad_processed_{mode}.json
+    processed_data_path: /mnt/matylda4/udupa/data/dump/endpointing/{dataset}/processed_{mode}.json
+    filtered_data_path: /mnt/matylda4/udupa/data/dump/endpointing/{dataset}/filtered_{mode}_context_{context_in_sec}_offset_{extra_offset}.json
+    resampled_audios_path: /mnt/matylda4/udupa/data/dump/endpointing/{dataset}/resampled_audios_{mode}_target_sr_{target_sr}
+  max_length: 500
+  num_vad_workers: 4
+
+  label_params:
+    context_in_sec: 40.0
+    extra_offset: 10.0
+    use_fixed_context_training: True
+    use_random_start: True
+    use_bos_token: True
+    use_tag_end_token: True
+    use_system_token: True
+    swap_timestamps_during_overlap: True
+    
+  special_tokens:
+    bos: <bos>
+    system_end: <system_end>
+    user_end: <user_end>
+    system: system
+    user: user
+
+  audio_params:
+    audio_feature: mimi
+    sr: 8000
+    target_sr: 24000
+    hop_length: 1920
+    model_repo: kyutai/mimi
+    num_quantisers: 8
+    feat_size: 512
+    freq: 12.5
+    upsample: false
+    delay_frames: 2
+
+  text_delim: "_##_"
+
+model:
+  name: base_lstm
+  use_system_ip_embed: True
+  use_mel_embed: False
+  use_loss_weights: True
+  loss_weight_factors: [0.0, 1.0, 1.0, 0.1, 1.0]
+
+model_params:
+  num_layers: 3
+  hidden_size: 324
+  bidirectional: False
+  dropout: 0.1
+  
+run_params:
+  device: cuda
+  epochs: 50
+  batch_size: 8
+  lr: 0.001
+  load_checkpoint: False
+  loss_fn: frame_level_cross_entropy
+  save_folder: /mnt/matylda4/udupa/exps/endpointing/NAC-LD-Endpointer/checkpoints
+  overwrite_prev_run: True
+  early_stopping: True
+  early_stopping_patience: 6
+  save_best_from_val_loss: False
+  save_best_from_val_acc: True
+  epoch_save_interval: 1
+  epoch_save_all: False
+  log_img_to_wandb: True 
+  asr_scores_save_filename: asr_offline_scores.pt
+  ep_cutoff_save_filename: ep_cutoff.pt
+  latency_save_filename: median_latency.pt
+
+wandb:
+  wandb_project: 
+  use_wandb: False
+
