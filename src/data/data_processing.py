@@ -1,13 +1,13 @@
 
-from src.utils import data_utils, logger, textgrid
-from silero_vad import load_silero_vad
-import librosa
-import torch
-from tqdm import tqdm
 import os
+import torch
+import librosa
 import torchaudio
-from pathlib import Path
+import numpy as np
+from tqdm import tqdm
 import multiprocessing
+from pathlib import Path
+from src.utils import data_utils, logger
 from src.utils.run_utils import resample_audio
 
 def handle_and_add_turns(cfg, dataset):
@@ -428,11 +428,7 @@ class endpointing_dataset(torch.utils.data.Dataset):
             melspec = self.audio_feature(yd)
         aligned_labels, texts = data_utils.align_labels_with_frames(fixed_context_labels, melspec.shape[-1], self.label_mapping)
         texts = self.cfg.data.text_delim.join(texts)    
-        aligned_labels = torch.from_numpy(np.array(aligned_labels)).long()
-        
-        if hasattr(self.cfg.data, "vap"):
-            vap_labels = data_utils.load_data_from_file(os.path.join(self.cfg.data.root_path, self.cfg.data.paths[self.mode].full_vad_out_save_path, key + ".json"), reader="json")
-            aligned_vap_labels = data_utils.align_vap_labels_with_frames(vap_labels, start_time, end_time, aligned_labels.shape[-1])
+        aligned_labels = torch.from_numpy(np.array(aligned_labels)).long()        
         assert y.shape[-1] == round(end_time - start_time) * self.sr, f"Shape mismatch: {y.shape[-1]} != {round(end_time - start_time) * self.cfg.data.audio_params.sr}"
         assert melspec.shape[-1] == aligned_labels.shape[-1], f"Shape mismatch: {melspec.shape[-1]} != {aligned_labels.shape[-1]}"
         if self.max_length is not None:

@@ -24,6 +24,8 @@ def load_config(yamlFiles):
         with open(yamlFile) as f:
             cfg = yaml.load(f, Loader=yaml.SafeLoader)
     cfg = edict(cfg)
+    cfg.run_name = os.path.splitext(os.path.basename(yamlFiles[0]))[0]
+    logger.info(f"Run name set to: {cfg.run_name}")
     return cfg    
 
 def load_run(cfg):
