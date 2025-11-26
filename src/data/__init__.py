@@ -1,6 +1,6 @@
 
 import torch
-from src.data.data_processing import process_vad, handle_and_add_turns
+from src.data.data_processing import process_vad, handle_and_add_turns, endpointing_dataset, endpointing_dataset_full_context
 
 def load_data(cfg, feat_extractor):
     """
@@ -36,10 +36,11 @@ def load_data(cfg, feat_extractor):
         process_vad(cfg, dataset) #here we use VAD to trim beginning and end silences for each segment
         handle_and_add_turns(cfg, dataset) #here we add all missing turns to the segments
         for mode in cfg.data.datasets[dataset].modes:
-            dataset_class = getattr(dataset_module, f"{dataset}_dataset")(cfg, mode, feat_extractor)
+            dataset_class = endpointing_dataset
             if hasattr(cfg, "infer_params"):
-                dataset_class = getattr(dataset_module, f"{dataset}_dataset_infer")(cfg, mode, feat_extractor)
-            dataset_instance = dataset_class(cfg, mode, feat_extractor)
+                # dataset_class = getattr(dataset_module, f"{dataset}_dataset_infer")(cfg, mode, feat_extractor)
+                dataset_class = endpointing_dataset_full_context
+            dataset_instance = dataset_class(cfg, mode, dataset, feat_extractor)
             dataset_instances.setdefault(mode, []).append(dataset_instance)
     for mode in dataset_instances:
         dataset_instance = torch.utils.data.ConcatDataset(dataset_instances[mode])

@@ -17,16 +17,13 @@ def load_config(yamlFiles):
     Returns:
         cfg (edict): EasyDict containing the merged configurations
     """
-    assert isinstance(yamlFiles, list)
+    assert isinstance(yamlFiles, list) and len(yamlFiles) == 1, "Please provide a list with one config file path"
     cfg = {}
     for yamlFile in yamlFiles:
         assert os.path.exists(yamlFile), f"Config file not found: {yamlFile}"
         with open(yamlFile) as f:
-            cfg_ = yaml.load(f, Loader=yaml.SafeLoader)
-            if cfg_ is None:
-                cfg_ = {}
-        cfg = {**cfg, **cfg_}
-    cfg = edict(cfg)   
+            cfg = yaml.load(f, Loader=yaml.SafeLoader)
+    cfg = edict(cfg)
     return cfg    
 
 def load_run(cfg):
@@ -204,6 +201,10 @@ def mimi(cfg):
             self.feature_extractor = processor
             self.model.eval()
             self.device = cfg.run_params.device
+            if not torch.cuda.is_available():
+                if self.device != 'cpu':
+                    logger.warning("CUDA not available, switching to CPU")
+                self.device = 'cpu'
             self.model.to(self.device)
             self.model.quantizer.to(self.device)
             self.upsample = upsample
