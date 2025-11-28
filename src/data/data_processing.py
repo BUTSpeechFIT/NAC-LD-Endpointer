@@ -303,8 +303,11 @@ def handle_length_filtering(cfg, data_json, mode, dataset):
     for key in data_json:
         segments = []
         for segment in data_json[key]["segments"]:
+            bos_time = 0
+            if segment[0]["turn"] == cfg.data.special_tokens.bos:
+                bos_time = segment[0]["end_time"] - segment[0]["start_time"]
             seg_duration = segment[-1]["end_time"] - segment[0]["start_time"]
-            if seg_duration < cfg.data.label_params.context_in_sec + cfg.data.label_params.extra_offset:
+            if (seg_duration - bos_time) < cfg.data.label_params.context_in_sec + cfg.data.label_params.extra_offset:
                 total_skipped_due_to_short_duration += 1
                 continue
             segments.append(segment)
@@ -330,11 +333,10 @@ class endpointing_dataset(torch.utils.data.Dataset):
         self.cfg = cfg
         processed_labels_save_path = cfg.data.save_paths.processed_data_path.format(dataset=dataset, mode=mode)
         json_data = data_utils.load_data_from_file(processed_labels_save_path, reader="json")
-        total_skipped_due_to_short_duration, available = 0, 0
 
         data_json = handle_length_filtering(cfg, json_data, mode, dataset)
         self.keys = data_json.keys()
-        logger.logger.info(f"Total skipped / available samples: {total_skipped_due_to_short_duration} / {available}")
+        logger.logger.info(f"Total skipped / available samples: {len(self.keys)} / {len(json_data)}")
         if hasattr(cfg.data.datasets[dataset], "num_samples"):
             if cfg.data.datasets[dataset]["num_samples"][mode] is not None:
                 logger.logger.info(f"Reducing number of {mode} samples to {cfg.data.datasets[dataset]['num_samples'][mode]}")

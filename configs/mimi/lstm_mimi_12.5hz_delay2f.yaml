@@ -5,7 +5,7 @@ data:
       override_preprocessed_data: False ### This is the data converted to the standard format
       override_vad_data: False ### This is the VAD processed data
       override_processed_data: False ### This is the processed data
-      override_filtered_data: False ### This is the filtered data
+      override_filtered_data: True ### This is the filtered data
       raw_path: /mnt/matylda4/udupa/data/SpokenWOZ/
       num_samples:
         train: 100

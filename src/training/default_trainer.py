@@ -119,7 +119,7 @@ class DefaultTrainer():
                 self.optimizer.zero_grad()
                 loss["total"].backward()   
                 self.optimizer.step()      
-            pbar.set_description(f"Loss: {loss['total'].item():.4f}, Acc: {loss['accuracy'].item():.4f}")  
+            pbar.set_description(f"Mode: {mode}, Loss: {loss['total'].item():.4f}, Acc: {loss['accuracy'].item():.4f}")  
             self.handle_batch_loss(loss, label_info)
         self.handle_end_of_epoch(data, label, output, metadata)
         return {"acc": self.avg_user_accuracy, "loss": self.epoch_metrics[f"{mode}_total"]}
@@ -220,7 +220,7 @@ class DefaultTrainer():
     def infer_loop(self, loader, ):
         latency_list_all = {}
         system_ids = None
-        for idx, data in enumerate(tqdm(loader)):
+        for idx, data in enumerate(tqdm(loader, desc="Infer")):
             if len(data) == 3:
                 data, label, metadata = data
                 codec_probs, codec_entropy = None, None
