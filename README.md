@@ -34,7 +34,7 @@ ___
 └─────────────────────────────────────┘
 ```
 
-### Processing Details
+#### Processing Details
 
 Each step produces intermediate outputs that can be cached:
 
@@ -63,7 +63,19 @@ The length filtered files are used for training.
 }
 ```
 
+#### Supported datasets
+| Dataset | Language(s) | Domain | duration (hrs) | 
+|------|-------------|---------------|---------------|
+| SpokenWoz | en | task-oriented dialogue | 30 |
+| HumDial | en, zh | conversational | 50 |
+
+**Todo**
+- [ ] Fisher
+- [ ] Switchboard
+
 ---
+
+## Endpointer configurations
 
 This endpointing is designed for conversational speech between 2 speakers (user and system). The end-of-turn is optimised for user speech only. It supports the following configurations
 
@@ -81,7 +93,8 @@ Here, we have access to seperate audio streams for user and system. Here, we use
 
 NOTE: This could be simplied by treating user and system as the same turn. However, we avoid this because depending on the dataset, user and system have varying pause patterns. System tends to have much larger pauses (They are processing user query, looking up information, etc).
 
-The choice of endpointer would depend on the application. For example, a user-only endpointer could be used for speech recogntion. A user-system endpointer could be used for full-duplex integration (however, with additional overhead for waiting for both user and system frames).
+The choice of endpointer would depend on the application. For example, a user-only endpointer could be used for speech recogntion. A user-system endpointer could be used for full-duplex integration (however, with additional overhead for waiting for both user and system frames). 
+
 
 ---
 
