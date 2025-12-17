@@ -117,9 +117,6 @@ def convert_continous_labels_to_fixed_context_frames(cfg, raw_labels, key):
     context_length = cfg.data.label_params.context_in_sec
     start_time = 0  
     context_labels = []
-    select_segment = random.choice(raw_labels)
-    raw_labels_ = raw_labels
-    raw_labels = select_segment
     
     if cfg.data.label_params.use_random_start:
         final_end_time = raw_labels[-1]["end_time"]
@@ -164,6 +161,8 @@ def convert_continous_labels_to_fixed_context_frames(cfg, raw_labels, key):
     sum_of_all_segments = sum([label[2] - label[1] for label in context_labels])
     start_time = context_labels[0][1]
     end_time = context_labels[-1][2]
+    # print(context_labels)
+    # print('---')
     return context_labels, start_time, end_time
 
 def align_labels_with_frames(labels, num_frames, mapping):

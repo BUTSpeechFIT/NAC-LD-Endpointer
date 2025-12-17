@@ -32,15 +32,15 @@ def preprocess_spokenwoz(cfg):
     test_data = data_utils.load_data_from_file(test_json, reader="json")
 
     for mode, data, audios in zip(
-        cfg.data.datasets.spokenwoz.modes,
+        cfg.data.modes,
         [train_data, val_data, test_data],
         [train_audios, val_audios, test_audios],
     ):  
         save_path = cfg.data.save_paths.preprocessed_data_path.strip().format(dataset="spokenwoz", mode=mode)
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         if os.path.exists(save_path):
-            if not cfg.data.datasets.spokenwoz.override_preprocessed_data:
-                logger.info(f"Preprocessed data already exists for spokenwoz, skipping...")
+            if "spokenwoz" not in cfg.data.override_preprocessed_data:
+                # logger.info(f"Preprocessed data already exists for spokenwoz, skipping...")
                 continue
         preprocessed_json = {}  
         for key in data:

@@ -35,7 +35,7 @@ def load_data(cfg, feat_extractor):
         getattr(dataset_module, preproc_fn_name)(cfg) #here we preprocess and standardize the dataset
         process_vad(cfg, dataset) #here we use VAD to trim beginning and end silences for each segment
         handle_and_add_turns(cfg, dataset) #here we add all missing turns to the segments
-        for mode in cfg.data.datasets[dataset].modes:
+        for mode in cfg.data.modes:
             dataset_class = endpointing_dataset
             if hasattr(cfg, "infer_params"):
                 # dataset_class = getattr(dataset_module, f"{dataset}_dataset_infer")(cfg, mode, feat_extractor)

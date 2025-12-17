@@ -1,22 +1,27 @@
 data:
+  modes: [train, val, test] #keep this fixed
+  
   datasets:
-    spokenwoz:
-      modes: [train, val, test]
-      override_preprocessed_data: False ### This is the data converted to the standard format
-      override_vad_data: False ### This is the VAD processed data
-      override_processed_data: False ### This is the processed data
-      override_filtered_data: True ### This is the filtered data
+    spokenwoz:    
       raw_path: /mnt/matylda4/udupa/data/SpokenWOZ/
-      num_samples:
-        train: 100
-        val:
-        test: 100
+      sr: 8000
+      # num_samples:
+        # train: 100 # if not specified, full data is used
+        # test: 100
+
   save_paths:
-    preprocessed_data_path: /mnt/matylda4/udupa/data/dump/endpointing/{dataset}/preprocessed_{mode}.json
-    vad_data_path: /mnt/matylda4/udupa/data/dump/endpointing/{dataset}/vad_processed_{mode}.json
-    processed_data_path: /mnt/matylda4/udupa/data/dump/endpointing/{dataset}/processed_{mode}.json
-    filtered_data_path: /mnt/matylda4/udupa/data/dump/endpointing/{dataset}/filtered_{mode}_context_{context_in_sec}_offset_{extra_offset}.json
-    resampled_audios_path: /mnt/matylda4/udupa/data/dump/endpointing/{dataset}/resampled_audios_{mode}_target_sr_{target_sr}
+    dump: /mnt/matylda4/udupa/data/dump/endpointing/
+    preprocessed_data_path: "{dataset}/preprocessed_{mode}.json"
+    vad_data_path: "{dataset}/vad_processed_{mode}.json"
+    processed_data_path: "{dataset}/processed_{mode}.json"
+    filtered_data_path: "{dataset}/filtered_{mode}_context_{context_in_sec}_offset_{extra_offset}.json"
+    resampled_audios_path: "{dataset}/resampled_audios_{mode}_target_sr_{target_sr}"
+  
+  override_preprocessed_data: [] ##fill this with dataset names to override
+  override_vad_data: []
+  override_processed_data: []
+  override_filtered_data: []
+
   max_length: 500
   num_vad_workers: 4
 
@@ -25,13 +30,10 @@ data:
     extra_offset: 10.0
     use_fixed_context_training: True
     use_random_start: True
-    use_bos_token: True
     use_tag_end_token: True
     use_system_token: True
-    swap_timestamps_during_overlap: True
     
   special_tokens:
-    bos: <bos>
     system_end: <system_end>
     user_end: <user_end>
     system: system
@@ -39,7 +41,6 @@ data:
 
   audio_params:
     audio_feature: mimi
-    sr: 8000
     target_sr: 24000
     hop_length: 1920
     model_repo: kyutai/mimi
@@ -56,7 +57,7 @@ model:
   use_system_ip_embed: True
   use_mel_embed: False
   use_loss_weights: True
-  loss_weight_factors: [0.0, 1.0, 1.0, 0.1, 1.0]
+  loss_weight_factors: [1.0, 1.0, 0.1, 1.0]
 
 model_params:
   num_layers: 3

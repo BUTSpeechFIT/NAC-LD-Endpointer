@@ -45,22 +45,6 @@ class DefaultTrainer():
             if hasattr(self.model, "scheduler"):
                 raise NotImplementedError("Scheduler not implemented")
     
-    def get_system_ids(self, data):
-        """
-        Extract system IDs from the label data.
-        Args:
-            data: Tensor containing label data.
-        Returns:
-            Tensor of system IDs.
-        """
-        system_id = get_token_to_id_mapping(self.cfg)[self.cfg.data.special_tokens.system]
-        ids = (data == system_id).long()
-        if hasattr(self.cfg, "infer_params"):
-            if hasattr(self.cfg.infer_params, "system_stream") and hasattr(self.cfg.infer_params, "infer_system_ids"):
-                if not self.cfg.infer_params.system_stream and not self.cfg.infer_params.infer_system_ids:
-                    ids = torch.zeros_like(ids)
-        return ids
-    
     def handle_delay(self, label):
         """
         Handle delay frames in the label data.
@@ -86,14 +70,17 @@ class DefaultTrainer():
                 label = torch.stack(label_)
         return label, delay_frames
 
+    def get_system_ids(self, data):
+        system_id = get_token_to_id_mapping(self.cfg)[self.cfg.data.special_tokens.system]
+        ###in label, whenever we have a match with system id, it is 1 else 0, in a new tensor
+        ids = (data == system_id).long()
+        if hasattr(self.cfg, "infer_params"):
+            if hasattr(self.cfg.infer_params, "system_stream") and hasattr(self.cfg.infer_params, "infer_system_ids"):
+                if not self.cfg.infer_params.system_stream and not self.cfg.infer_params.infer_system_ids:
+                    ids = torch.zeros_like(ids)
+        return ids
+
     def handle_system(self, label):
-        """
-        Handle system labels in the label data. - we convert labels such that no loss is computed for system labels if disabled.
-        Args:
-            label: Tensor containing label data.
-        Returns:
-            Modified label tensor.
-        """ 
         if hasattr(self.cfg.model, "ignore_system_labels"):
             if self.cfg.model.ignore_system_labels:
                 system_id = get_token_to_id_mapping(self.cfg)[self.cfg.data.special_tokens.system]
@@ -104,14 +91,13 @@ class DefaultTrainer():
         
     def train(self, mode, loader):
         self.handle_start_of_epoch(mode)
-        system_ids = None
         pbar = tqdm(loader, desc=f"{mode}")
         for idx, data in enumerate(pbar):
             data, label, metadata = data
             data, label = self.to_device([data, label])
             if self.cfg.model.use_system_ip_embed:
                 system_ids = self.get_system_ids(label)
-            output = self.model(data, system_ids=system_ids, init_hidden=True)
+            output = self.model(data, init_hidden=True, system_ids=system_ids)
             label_, delay_frames = self.handle_delay(label)
             label_ = self.handle_system(label_)
             loss, label_info = self.model.loss(output, label_, delay_frames)
@@ -147,18 +133,11 @@ class DefaultTrainer():
             self.epoch_metrics[key] = round(sum(self.epoch_metrics[key]) / len(self.epoch_metrics[key]), 4)
         logger.info(f"{self.mode} epoch: {self.epoch_metrics}")
         self.wandb_logger.log(self.epoch_metrics)   
-        cm = confusion_matrix(self.cm["gnd"], self.cm["pred"], labels=[0, 1, 2, 3, 4])
+        cm = confusion_matrix(self.cm["gnd"], self.cm["pred"], labels=[0, 1, 2, 3])
         accuracy = np.trace(cm) / np.sum(cm)
         class_wise_accuracy = np.diag(cm) / np.sum(cm, axis=1)
         mapping = get_id_to_token_mapping(self.cfg)
-        if len(class_wise_accuracy) == 4:
-            class_labels = list(mapping.values())[1:]
-        elif len(class_wise_accuracy) == 5:
-            class_labels = list(mapping.values())
-        elif len(class_wise_accuracy) == 2:
-            class_labels = [list(mapping.values())[2], list(mapping.values())[4]]
-        else:
-            raise NotImplementedError(f"Class labels not implemented {set(self.cm['gnd'])} {set(self.cm['pred'])} {cm}")
+        class_labels = list(mapping.values())
         class_wise_accuracy = {class_labels[i]: round(class_wise_accuracy[i]*100, 2) for i in range(len(class_wise_accuracy))}
         user_end_turn_accuracy = class_wise_accuracy[self.cfg.data.special_tokens.user_end]
         user_accuracy = class_wise_accuracy[self.cfg.data.special_tokens.user]
@@ -219,7 +198,6 @@ class DefaultTrainer():
     
     def infer_loop(self, loader, ):
         latency_list_all = {}
-        system_ids = None
         for idx, data in enumerate(tqdm(loader, desc="Infer")):
             if len(data) == 3:
                 data, label, metadata = data
@@ -231,7 +209,7 @@ class DefaultTrainer():
             data, label = self.to_device([data, label])
             if self.cfg.model.use_system_ip_embed:
                 system_ids = self.get_system_ids(label)
-            output = self.model.infer(data, system_ids=system_ids, init_hidden=True)
+            output = self.model.infer(data, init_hidden=True, system_ids=system_ids)
 
             assert output.size(-1) == len(self.cfg.data.special_tokens.keys()), f"Output size mismatch: {output.size(-1)} != {len(self.cfg.data.special_tokens.keys())}"
             audio, label_data, texts, start_time, end_time, key = metadata
@@ -245,7 +223,7 @@ class DefaultTrainer():
             prev_turn = self.cfg.infer_params.previous_turns[0]
             prev_turn_id = get_token_to_id_mapping(self.cfg)[prev_turn]
             turn_id = get_token_to_id_mapping(self.cfg)[turn]
-            
+            system_ids = self.get_system_ids(label)
             latency_list_parallel, latency_list_parallel_numpy, index_list_parallel = metrics.evaluate_latency_parallel(
                 self.cfg, 
                 soft_output[:, :, turn_id], 
