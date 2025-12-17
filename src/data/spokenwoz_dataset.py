@@ -37,6 +37,7 @@ def preprocess_spokenwoz(cfg):
         [train_audios, val_audios, test_audios],
     ):  
         save_path = cfg.data.save_paths.preprocessed_data_path.strip().format(dataset="spokenwoz", mode=mode)
+        save_path = os.path.join(cfg.data.save_paths.dump, save_path)
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         if os.path.exists(save_path):
             if "spokenwoz" not in cfg.data.override_preprocessed_data:

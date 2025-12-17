@@ -235,7 +235,7 @@ def process_vad(cfg, dataset):
         with multiprocessing.Pool(
             processes=cfg.data.num_vad_workers,
             initializer=init_vad_worker,
-            initargs=(cfg.data.audio_params.sr,)
+            initargs=(cfg.data.datasets[dataset].sr,)
         ) as pool:
             results = list(tqdm(
                 pool.imap(_process_single_item_vad, args_list), 
@@ -354,7 +354,7 @@ class endpointing_dataset(torch.utils.data.Dataset):
                     for key in self.keys:
                         self.data_json[key]["audio_filepath"] = os.path.join(resampled_audios_path, key + ".wav")
                     return
-                logger.logger.info(f"Resampling audios to {self.cfg.data.audio_params.target_sr}Hz, saving at {resampled_audios_path}, Pending audios: {num_resampled_audios - num_audios}")
+                logger.logger.info(f"Resampling audios to {self.cfg.data.audio_params.target_sr}Hz, saving at {resampled_audios_path}, Pending audios: {num_audios - num_resampled_audios}")
                 preserve_channels = False
                 if hasattr(self.cfg.data, "multi_audio_stream"):
                     preserve_channels = self.cfg.data.multi_audio_stream

@@ -1,12 +1,19 @@
 data:
-  modes: [train, val, test] #keep this fixed
+  modes: [train, val] #keep this fixed
   
   datasets:
     spokenwoz:    
       raw_path: /mnt/matylda4/udupa/data/SpokenWOZ/
       sr: 8000
-      num_samples:
-        train: 100 # if not specified, full data is used
+      # num_samples:
+        # train: 100 # if not specified, full data is used
+        # test: 100
+    humdial:
+      raw_path: /mnt/matylda4/udupa/data/HumDial/
+      sr: 16000
+      # num_samples:
+        # train: 100 # if not specified, full data is used
+      languages: [en] #dataset has en and zh
         # test: 100
 
   save_paths:
@@ -29,7 +36,7 @@ data:
     context_in_sec: 40.0
     extra_offset: 10.0
     use_fixed_context_training: True
-    use_tag_end_token: True
+    use_random_start: True
     
   special_tokens:
     system_end: <system_end>
@@ -66,7 +73,7 @@ model_params:
 run_params:
   device: cuda
   epochs: 50
-  batch_size: 8
+  batch_size: 32
   lr: 0.001
   load_checkpoint: False
   loss_fn: frame_level_cross_entropy

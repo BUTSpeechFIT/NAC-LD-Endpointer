@@ -8,6 +8,9 @@ data:
       num_samples:
         train: 100 # if not specified, full data is used
         # test: 100
+    humdial:
+      raw_path: /mnt/matylda4/udupa/data/HumDial/
+      sr: 16000
 
   save_paths:
     dump: /mnt/matylda4/udupa/data/dump/endpointing/
