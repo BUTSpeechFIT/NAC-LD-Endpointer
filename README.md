@@ -82,8 +82,14 @@ This endpointing is designed for conversational speech between 2 speakers (user 
 #### 1. Single-stream with both speakers
 Used when both speaker audio is present in single audio stream. We are not interested in perfroming diarisation here, so we provide the timings for the system speech to the model, so that the model can learn to predict turn-ends for user.
 
+`config: configs/mimi/lstm_mimi_12.5hz_delay2f.yaml`
+![alt text](images/single_stream.png)
+
 #### 2. Single-stream using only user
 Used when both speaker audio is present in single audio stream. We mask the loss for the system frames. While the model can learn from interaction with system, the loss is only computed for user and user-end.
+
+`config: configs/mimi/lstm_mimi_12.5hz_delay2f_mask-system.yaml`
+![alt text](images/single_stream_user_only.png)
 
 #### 3. Dual-stream using only user
 Here, we have access to seperate audio streams for user and system. We ignore the system stream, and train the single-stream endpointer only on user speech.

@@ -64,6 +64,11 @@ def load_run(cfg):
         logger.info(f"Using {cfg.data.audio_params.audio_feature} as feature extractor")
     model = globals()[cfg.model.name](cfg)
     trainer = get_trainer(cfg)
+
+    if cfg.run_params.get('compile_model', False) and torch.__version__ >= '2.0.0':
+        logger.info("Compiling model with torch.compile")
+        model = torch.compile(model)
+        
     return model, cfg, trainer, feat_extractor
 
 def get_trainer(cfg):

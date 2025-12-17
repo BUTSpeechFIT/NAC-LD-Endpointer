@@ -81,8 +81,8 @@ class DefaultTrainer():
         return ids
 
     def handle_system(self, label):
-        if hasattr(self.cfg.model, "ignore_system_labels"):
-            if self.cfg.model.ignore_system_labels:
+        if hasattr(self.cfg.model, "mask_system_tokens"):
+            if self.cfg.model.mask_system_tokens:
                 system_id = get_token_to_id_mapping(self.cfg)[self.cfg.data.special_tokens.system]
                 label[label == system_id] = -1
                 system_end_id = get_token_to_id_mapping(self.cfg)[self.cfg.data.special_tokens.system_end]
@@ -91,6 +91,7 @@ class DefaultTrainer():
         
     def train(self, mode, loader):
         self.handle_start_of_epoch(mode)
+        system_ids = None
         pbar = tqdm(loader, desc=f"{mode}")
         for idx, data in enumerate(pbar):
             data, label, metadata = data
@@ -198,6 +199,7 @@ class DefaultTrainer():
     
     def infer_loop(self, loader, ):
         latency_list_all = {}
+        system_ids = None
         for idx, data in enumerate(tqdm(loader, desc="Infer")):
             if len(data) == 3:
                 data, label, metadata = data

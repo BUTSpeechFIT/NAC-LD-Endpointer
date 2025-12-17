@@ -29,6 +29,7 @@ data:
     context_in_sec: 40.0
     extra_offset: 10.0
     use_fixed_context_training: True
+    use_random_start: True
     use_tag_end_token: True
     
   special_tokens:
@@ -52,9 +53,10 @@ data:
 
 model:
   name: base_lstm
-  use_system_ip_embed: True
+  use_system_ip_embed: False
   use_mel_embed: False
   use_loss_weights: True
+  mask_system_tokens: True
   loss_weight_factors: [1.0, 1.0, 0.1, 1.0]
 
 model_params:

@@ -1,6 +1,7 @@
 
 import torch
 from src.data.data_processing import process_vad, handle_and_add_turns, endpointing_dataset, endpointing_dataset_full_context
+import multiprocessing
 
 def load_data(cfg, feat_extractor):
     """
@@ -11,6 +12,7 @@ def load_data(cfg, feat_extractor):
     Returns:
         loaders (dict): Dictionary containing data loaders for each mode
     """
+
     supported_datasets = ['spokenwoz', 'humdial']
     dataset_instances, loaders = {}, {}
     for dataset in cfg.data.datasets:
@@ -49,5 +51,6 @@ def load_data(cfg, feat_extractor):
             batch_size=cfg.run_params.batch_size,
             shuffle=True if mode == 'train' else False,
             collate_fn=None, # We train with fixed length segments, so no need for custom collate_fn
+            pin_memory=False
         )
     return loaders

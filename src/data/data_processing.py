@@ -1,5 +1,6 @@
 
 import os
+import copy
 import torch
 import librosa
 import torchaudio
@@ -270,6 +271,8 @@ def handle_length_filtering(cfg, data_json, mode, dataset):
     total_skipped_due_to_short_duration = 0
     for key in data_json:
         seg_duration = data_json[key]["segments"][-1]["end_time"] - data_json[key]["segments"][0]["start_time"]
+        if data_json[key]["segments"][0]["turn"] in [cfg.data.special_tokens.user_end, cfg.data.special_tokens.system_end]:
+            seg_duration -= data_json[key]["segments"][0]["end_time"] 
         if seg_duration < cfg.data.label_params.context_in_sec + cfg.data.label_params.extra_offset:
             total_skipped_due_to_short_duration += 1
             continue
@@ -295,7 +298,6 @@ class endpointing_dataset(torch.utils.data.Dataset):
         processed_labels_save_path = cfg.data.save_paths.processed_data_path.format(dataset=dataset, mode=mode)
         processed_labels_save_path = os.path.join(cfg.data.save_paths.dump, processed_labels_save_path)
         json_data = data_utils.load_data_from_file(processed_labels_save_path, reader="json")
-
         data_json = handle_length_filtering(cfg, json_data, mode, dataset)
         self.keys = data_json.keys()
         logger.logger.info(f"Total filtered / available samples: {len(self.keys)} / {len(json_data)}")
@@ -308,7 +310,7 @@ class endpointing_dataset(torch.utils.data.Dataset):
         self.label_mapping = data_utils.get_token_to_id_mapping(cfg)
         self.mode = mode
         self.dataset = dataset
-        self.data_json = data_json
+        self.data_json = copy.deepcopy(data_json)
         self.get_audio_feature(feat_extractor)
 
                 
@@ -388,7 +390,7 @@ class endpointing_dataset(torch.utils.data.Dataset):
         if hasattr(self.cfg.data, "zero_system"):
             if self.cfg.data.zero_system:
                 preserve_channels = True
-        print("Loading audio segment:", self.data_json[key]["audio_filepath"], start_time, end_time, "Preserve channels:", preserve_channels, self.sr)
+        # print("Loading audio segment:", self.data_json[key]["audio_filepath"], start_time, end_time, "Preserve channels:", preserve_channels, self.sr)
         y = data_utils.load_audio_segment(self.data_json[key]["audio_filepath"], start_time, end_time, self.sr, preserve_channels=preserve_channels)
         if hasattr(self.cfg.data, "zero_system"):
             if self.cfg.data.zero_system:
@@ -400,7 +402,7 @@ class endpointing_dataset(torch.utils.data.Dataset):
                 yd = y.numpy()
                 yd = [yd[0], yd[1]]
             melspec = self.audio_feature(yd)
-        aligned_labels, texts = data_utils.align_labels_with_frames(fixed_context_labels, melspec.shape[-1], self.label_mapping)
+        aligned_labels, texts = data_utils.align_labels_with_frames(fixed_context_labels, melspec.shape[-1], self.label_mapping, key)
         texts = self.cfg.data.text_delim.join(texts)    
         aligned_labels = torch.from_numpy(np.array(aligned_labels)).long()        
         assert y.shape[-1] == round(end_time - start_time) * self.sr, f"Shape mismatch: {y.shape[-1]} != {round(end_time - start_time) * self.cfg.data.datasets[self.dataset].sr}"

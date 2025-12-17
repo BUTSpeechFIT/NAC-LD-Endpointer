@@ -130,11 +130,11 @@ def convert_continous_labels_to_fixed_context_frames(cfg, raw_labels, key):
         start_time = raw_labels[0]["start_time"]
         # start_time = 183.82z
     start_idx = [i for i, label in enumerate(raw_labels) if label["start_time"] == start_time][0]
-    sliced = raw_labels[start_idx:]
     stop = False
     for turn_idx, label in enumerate(raw_labels):
         if turn_idx < start_idx:
             continue
+        label = label.copy() #← Make a copy to avoid modifying the original
         if context_labels == []:
             if label["end_time"] > start_time + context_length:
                 label["end_time"] = start_time + context_length
@@ -158,14 +158,13 @@ def convert_continous_labels_to_fixed_context_frames(cfg, raw_labels, key):
         )   
         if stop:
             break
-    sum_of_all_segments = sum([label[2] - label[1] for label in context_labels])
     start_time = context_labels[0][1]
     end_time = context_labels[-1][2]
     # print(context_labels)
     # print('---')
     return context_labels, start_time, end_time
 
-def align_labels_with_frames(labels, num_frames, mapping):
+def align_labels_with_frames(labels, num_frames, mapping, key=None):
     total_duration = labels[-1][2] - labels[0][1]
     
     duration_per_frame = total_duration / num_frames
@@ -198,7 +197,7 @@ def align_labels_with_frames(labels, num_frames, mapping):
     if len(aligned_labels) - num_frames == 1:
         aligned_labels = aligned_labels[:-1]
     
-    assert len(aligned_labels) == num_frames, f"Expected {num_frames} frames, got {len(aligned_labels)} frames, {total_duration}, {labels}"
+    assert len(aligned_labels) == num_frames, f"Expected {num_frames} frames, got {len(aligned_labels)} frames, {total_duration}, {labels}, {key}"
     return aligned_labels, texts       
     
 
